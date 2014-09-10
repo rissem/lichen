@@ -3,7 +3,7 @@
 </head>
 
 <body>
-  <h1>Game</h1>
+  <h1 style="color:{{playerColor}}">Game</h1>
   {{> board }}
 </body>
 
@@ -12,15 +12,7 @@
        viewPort="0 0 120 120" version="1.1"
        xmlns="http://www.w3.org/2000/svg">
     {{#each cells}}
-      <polygon points="{{cellPoints}}"/>
-      <!--circle cx="{{xCoord}}" cy="{{yCoord}}" stroke="black"
-       stroke-width="3" fill="red" r="20"/-->
+      <polygon points="{{cellPoints}}" fill="{{color}}" stroke="black" stroke-width="4" />
     {{/each}}
   </svg>
-
-  <ul>
-  {{#each cells }}
-    <li>{{draw}}</li>
-  {{/each }}
-  </ul>
 </template>
