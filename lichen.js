@@ -1,7 +1,18 @@
-BOARD_WIDTH = 1000;
-BOARD_HEIGHT = 1000;
+BOARD_WIDTH = 750;
+BOARD_HEIGHT = 820;
 BOARD_RADIUS = 7;
 HEX_RADIUS = 27;
+
+HAND_KEYS = [
+  "Q",
+  "W",
+  "E",
+  "R",
+  "A",
+  "S",
+  "D",
+  "F"
+];
 
 SQRT_3_2 = Math.sqrt(3) * 0.5;
 
@@ -16,6 +27,7 @@ Games = new Mongo.Collection("games");
 Pieces = new Mongo.Collection("pieces");
 Players = new Mongo.Collection("players");
 Moves = new Mongo.Collection("moves");
+HandPieces = new Mongo.Collection("handPieces");
 Cells = new Mongo.Collection("cells", {transform: function(doc){
   var model = _.clone(doc);
 
@@ -164,6 +176,18 @@ Meteor.startup(function(){
       "energy":0,
       "points":0,
       "currentType":"offensive"
+    });
+    
+    // Hands
+    Players.find().forEach(function(player) {
+      for (var i = 0; i < HAND_KEYS.length; i++) {
+        HandPieces.insert({
+          index: i,
+          key: HAND_KEYS[i],
+          type: "empty",
+          playerId: player._id
+        });
+      }
     });
   }
 });

@@ -6,6 +6,26 @@ Meteor.startup(function(){
   });
 });
 
+Template.hand.helpers({
+  handPieces: function() {
+    console.log("??????");
+    return HandPieces.find({
+      playerId: Session.get("currentPlayer")
+    }, {sort: {index: 1}});
+  },
+  
+  empty: function() {
+    return this.type == "empty";
+  },
+  
+  key: function() {
+    return this.key;
+  },
+  
+  type: function() {
+    return this.type;
+  }
+});
 
 Template.board.helpers({
   boardWidth: function(){
@@ -54,14 +74,22 @@ Template.body.helpers({
     if (!player){
       return;
     }
-    return COLORS[player.color]["energy"];
+    return COLORS[player.color].energy;
+  },
+  
+  playerName: function() {
+    var player = Players.findOne(Session.get("currentPlayer"));
+    if (!player){
+      return;
+    }
+    return player.name;
   },
   
   currentType: function() {
     var player = Players.findOne(Session.get("currentPlayer"));
     if (!player) { return; }
     console.log("CURRENT TYPE: " + player.currentType);
-    return player["currentType"];
+    return player.currentType;
   }
 });
 

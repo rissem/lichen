@@ -3,15 +3,31 @@
 </head>
 
 <body>
-  <h1 style="color:{{playerColor}}">Game</h1>
-  <h2>{{currentType}}</h2>
-  {{> board }}
+  <div style="width:1200px">
+    <div style="width:200px; float:left">
+      <h1 style="color:{{playerColor}}">{{playerName}}</h1>
+      {{> hand }}
+    </div>
+    {{> board }}
+  </div>
 </body>
 
+<template name="hand">
+  <ul>
+    {{#each handPieces}}
+      {{#if empty}}
+        <li>{{key}}: None</li>
+      {{else}}
+        <li>{{key}}: {{type}}</li>=)
+      {{/if}}
+    {{/each}}
+  </ul>
+</template>
+
 <template name="board">
-  <svg width="1000" height="1000" 
-       viewPort="0 0 120 120" version="1.1"
-       xmlns="http://www.w3.org/2000/svg">
+  <svg width="{{boardWidth}}" height="{{boardHeight}}" style="float:left" 
+    viewPort="0 0 120 120" version="1.1"
+    xmlns="http://www.w3.org/2000/svg">
     {{#each cells}}
       <polygon points="{{cellPoints}}" fill="{{color}}" stroke="black" stroke-width="4" />
     {{/each}}
