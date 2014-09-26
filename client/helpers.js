@@ -1,3 +1,12 @@
+Meteor.startup(function(){
+  $(window).keydown(function(event){
+    if (!KEY_PIECE_MAP[String.fromCharCode(event.keyCode)])
+      return;
+    Players.update(Session.get("currentPlayer"), {$set: {"currentType": KEY_PIECE_MAP[String.fromCharCode(event.keyCode)]}});
+  });
+});
+
+
 Template.board.helpers({
   boardWidth: function(){
     return BOARD_WIDTH;
@@ -41,12 +50,18 @@ Template.board.helpers({
 
 Template.body.helpers({
   playerColor: function() {
-    console.log("PLAYER COLOR");
     var player = Players.findOne(Session.get("currentPlayer"));
     if (!player){
       return;
     }
     return COLORS[player.color]["energy"];
+  },
+  
+  currentType: function() {
+    var player = Players.findOne(Session.get("currentPlayer"));
+    if (!player) { return; }
+    console.log("CURRENT TYPE: " + player.currentType);
+    return player["currentType"];
   }
 });
 
@@ -59,15 +74,16 @@ Template.body.events({
       Session.set("currentPlayer", Players.findOne({name: "Mike"})._id);
     }
   }
-})
+});
 
 Template.board.events({
   "click polygon": function(){
-    if (this.playerId == Session.get("currentPlayer") && this.type == "offensive")
+    var player = Players.findOne(Session.get("currentPlayer"));
+    if (this.playerId == player._id && this.type == player.currentType)
       return;
     console.log(this);
-    Cells.update({_id: this._id}, {$set: {playerId: Session.get("currentPlayer"), 
-      type: "offensive", growType: this.type, growPlayerId: this.playerId, birthTime: Date.now(), growTime: null}});
+    Cells.update({_id: this._id}, {$set: {playerId: player._id, 
+      type: player.currentType, growType: this.type, growPlayerId: this.playerId, birthTime: Date.now(), growTime: null}});
   }
 });
 
@@ -76,8 +92,12 @@ Template.board.draw = function(){
 };
 
 Meteor.startup(function(){
+  var playersSet = false;
   Meteor.autorun(function(){
+    if (playersSet)
+      return;
     if (Players.find().count() > 0){
+      playersSet = true;        
       Session.set("currentPlayer", Players.findOne()._id);
     }
   });
