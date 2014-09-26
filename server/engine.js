@@ -1,10 +1,10 @@
 //do stuff
-var stepSize = 200;
+var stepSize = 50;
 
 var lastRun = Date.now();
 Meteor.setInterval(function(){
   var timeSinceLastRun = Date.now() - lastRun;
-  console.log("time since last run", timeSinceLastRun);
+  // console.log("time since last run", timeSinceLastRun);
   lastRun = Date.now();
   var newGameboard = [];
   for (var i = -BOARD_RADIUS; i <= BOARD_RADIUS; i++) {

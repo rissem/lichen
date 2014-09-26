@@ -81,9 +81,11 @@ Template.board.events({
     var player = Players.findOne(Session.get("currentPlayer"));
     if (this.playerId == player._id && this.type == player.currentType)
       return;
-    console.log(this);
-    Cells.update({_id: this._id}, {$set: {playerId: player._id, 
-      type: player.currentType, growType: this.type, growPlayerId: this.playerId, birthTime: Date.now(), growTime: null}});
+    Meteor.call("updateCell", [this._id, {
+      playerId: player._id,
+      type: player.currentType,
+      growType: this.type,
+      growPlayerId: this.playerId}]);
   }
 });
 
