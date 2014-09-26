@@ -16,7 +16,8 @@ Games = new Mongo.Collection("games");
 Pieces = new Mongo.Collection("pieces");
 Players = new Mongo.Collection("players");
 Moves = new Mongo.Collection("moves");
-Cells = new Mongo.Collection("cells", {transform: function(doc){
+
+var transform = function(doc){
   var model = _.clone(doc);
 
   model.screenX = function(){
@@ -85,7 +86,42 @@ Cells = new Mongo.Collection("cells", {transform: function(doc){
     }
   };
   return model;
-}});
+}
+
+if (Meteor.isServer){
+  Cells = new Mongo.Collection("cells", {connection: null, transform: transform});
+}
+
+if (Meteor.isClient){
+  Cells = new Mongo.Collection("cells", {transform: transform});
+}
+
+
+if (Meteor.isServer){
+  Meteor.publish('games', function(){
+    return Games.find({});
+  });
+
+  Meteor.publish('players', function(){
+    return Players.find({});
+  });
+
+  Meteor.publish('moves', function(){
+    return Moves.find({});
+  });
+
+  Meteor.publish("cells", function(){
+    console.log("PUBLISH THE CELLS", Cells.find().count());
+    return Cells.find({});
+  })
+} 
+
+if (Meteor.isClient){
+  Meteor.subscribe("games");
+  Meteor.subscribe("players");
+  Meteor.subscribe("moves");
+  Meteor.subscribe("cells");
+}
 
 COLORS = {
   green: {
