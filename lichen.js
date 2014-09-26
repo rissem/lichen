@@ -61,7 +61,7 @@ Cells = new Mongo.Collection("cells", {transform: function(doc){
   model.grow = function(gameBoard){
     if (this.type == "empty"){
       return;
-    } else if (this.type == "offensive"){
+    } else if (this.type == "offensive" || this.type == "energy"){
       if (this.growTime){
         return;
       }
@@ -116,7 +116,15 @@ GROWING_COLORS = {
 PIECES = {
   "offensive": {
     "growthRate": 1000,
+  },
+  "energy": {
+    "growthRate": 1000,
   }
+};
+
+KEY_PIECE_MAP = {
+  "Q": "offensive",
+  "W": "energy"
 };
 
 Meteor.startup(function(){
@@ -145,7 +153,8 @@ Meteor.startup(function(){
       name: "Mike",
       color: "green",
       "energy":0,
-      "points":5
+      "points":5,
+      "currentType":"offensive"
     });
     
     //Player 2
@@ -153,15 +162,18 @@ Meteor.startup(function(){
       name: "Teale",
       color: "blue",
       "energy":0,
-      "points":0
+      "points":0,
+      "currentType":"offensive"
     });
   }
 });
 
 var growthFunctions = {
-  "empty": function(){},
+  "empty": function() {},
   
-  "offensive": function(){
-    
+  "offensive": function() {
+  },
+  
+  "energy": function() {
   }
 };
