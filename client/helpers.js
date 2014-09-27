@@ -1,16 +1,25 @@
 Meteor.startup(function(){
   $(window).keydown(function(event){
+    for (var i = 0; i < HAND_KEYS.length; i++) {
+      if (HAND_KEYS[i] == String.fromCharCode(event.keyCode)) {
+        console.log("DO IT");
+        Players.update(Session.get("currentPlayer"), {$set: {"selectedPiece": i}});
+        break;
+      }
+    }
+    /*
     if (!KEY_PIECE_MAP[String.fromCharCode(event.keyCode)])
       return;
+    Session.set("currentPiece", )
     Players.update(Session.get("currentPlayer"), {$set: {"currentType": KEY_PIECE_MAP[String.fromCharCode(event.keyCode)]}});
+    */
   });
 });
 
 Template.hand.helpers({
   handPieces: function() {
-    console.log("??????");
     return HandPieces.find({
-      playerId: Session.get("currentPlayer")
+      //playerId: Session.get("currentPlayer")
     }, {sort: {index: 1}});
   },
   
@@ -24,6 +33,23 @@ Template.hand.helpers({
   
   type: function() {
     return this.type;
+  },
+  
+  color: function() {
+    if (this.type == "empty") {
+      return "aaa";
+    } else {
+      var player = Players.findOne(this.playerId);
+      return COLORS[player.color][this.type];
+    }
+  },
+  
+  selected: function() {
+    if (this.index == Players.findOne(Session.get("currentPlayer")).selectedPiece) {
+      return "<--";
+    } else {
+      return "";
+    }
   }
 });
 
@@ -85,6 +111,14 @@ Template.body.helpers({
     return player.name;
   },
   
+  playerPoints: function(){
+    var player = Players.findOne(Session.get("currentPlayer"));
+    if (!player){
+      return;
+    }
+    return player.points;
+  },
+  
   currentType: function() {
     var player = Players.findOne(Session.get("currentPlayer"));
     if (!player) { return; }
@@ -107,13 +141,18 @@ Template.body.events({
 Template.board.events({
   "click polygon": function(){
     var player = Players.findOne(Session.get("currentPlayer"));
-    if (this.playerId == player._id && this.type == player.currentType)
+    var handPiece = HandPieces.findOne({playerId: player._id, index: player.selectedPiece});
+    if (handPiece.type == "empty")
+      return;
+    if (this.playerId == player._id && this.type == handPiece.type)
       return;
     Meteor.call("updateCell", [this._id, {
       playerId: player._id,
-      type: player.currentType,
+      type: handPiece.type,
       growType: this.type,
-      growPlayerId: this.playerId}]);
+      growPlayerId: this.playerId}
+    ]);
+    HandPieces.update(handPiece._id, {$set: {type: "empty"}});
   }
 });
 

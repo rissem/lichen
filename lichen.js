@@ -2,6 +2,7 @@ BOARD_WIDTH = 750;
 BOARD_HEIGHT = 820;
 BOARD_RADIUS = 7;
 HEX_RADIUS = 27;
+DEAL_TIME = 5000;
 
 HAND_KEYS = [
   "Q",
@@ -120,11 +121,17 @@ if (Meteor.isServer){
   Meteor.publish('moves', function(){
     return Moves.find({});
   });
+  
+  Meteor.publish("handPieces", function(playerId){
+    console.log("PLAYER ID", playerId);
+    console.log("COUNT", HandPieces.find({playerId: playerId}).count());
+    return HandPieces.find({playerId: playerId});
+  });
 
   Meteor.publish("cells", function(){
     console.log("PUBLISH THE CELLS", Cells.find().count());
     return Cells.find({});
-  })
+  });
 } 
 
 if (Meteor.isClient){
@@ -132,6 +139,9 @@ if (Meteor.isClient){
   Meteor.subscribe("players");
   Meteor.subscribe("moves");
   Meteor.subscribe("cells");
+  Meteor.autorun(function(){
+    Meteor.subscribe("handPieces", Session.get("currentPlayer"));
+  });
 }
 
 COLORS = {
@@ -175,6 +185,7 @@ KEY_PIECE_MAP = {
 };
 
 Meteor.startup(function(){
+
   if (Meteor.isServer && Cells.find().count() === 0){
     console.log("No cells exist, creating cells");
     for (var i = -BOARD_RADIUS; i <= BOARD_RADIUS; i++){
@@ -194,36 +205,53 @@ Meteor.startup(function(){
         });
       }
     }
-    
-    //Player 1
-    Players.insert({
-      name: "Mike",
-      color: "green",
-      "energy":0,
-      "points":5,
-      "currentType":"offensive"
-    });
-    
-    //Player 2
-    Players.insert({
-      name: "Teale",
-      color: "blue",
-      "energy":0,
-      "points":0,
-      "currentType":"offensive"
-    });
-    
-    // Hands
-    Players.find().forEach(function(player) {
-      for (var i = 0; i < HAND_KEYS.length; i++) {
-        HandPieces.insert({
-          index: i,
-          key: HAND_KEYS[i],
-          type: "empty",
-          playerId: player._id
-        });
-      }
-    });
+    if (Players.find().count() === 0){
+      //Player 1
+      Players.insert({
+        name: "Mike",
+        color: "green",
+        "energy":0,
+        "points":0,
+        "selectedPiece":0
+      });
+      
+      //Player 2
+      Players.insert({
+        name: "Teale",
+        color: "blue",
+        "energy":0,
+        "points":0,
+        "selectedPiece":0
+      });
+      
+      // Hands
+      Players.find().forEach(function(player) {
+        for (var i = 0; i < HAND_KEYS.length; i++) {
+          HandPieces.insert({
+            index: i,
+            key: HAND_KEYS[i],
+            type: "empty",
+            playerId: player._id,
+            dealtTime: Date.now()
+          });
+        }
+      });      
+    }
+    Meteor.setInterval(function(){
+      Players.find().forEach(function(player) {
+        var lastDealtPiece = HandPieces.findOne({playerId: player._id}, {sort: {dealtTime: -1}});
+        var lastDealtTime = lastDealtPiece.dealtTime;
+        var emptyHandPieces = HandPieces.find({playerId: player._id, type:"empty"}, {sort: {index: 1}});
+        if (Date.now() - lastDealtTime > DEAL_TIME && emptyHandPieces.count()) {
+          console.log(Date.now() - lastDealtTime, DEAL_TIME);
+          var newType = "offensive";
+          if (Math.random() < .5) {
+            newType = "energy";
+          }
+          HandPieces.update(emptyHandPieces.fetch()[0]._id, {$set: {type: newType, dealtTime: Date.now()}});
+        }
+      })
+    }, 500);
   }
 });
 
