@@ -24,6 +24,62 @@ var origin = function(){
   };
 };
 
+//GLOBAL
+resetGame = function(){
+    Cells.remove({});
+    Players.remove({});
+    HandPieces.remove({});
+    for (var i = -BOARD_RADIUS; i <= BOARD_RADIUS; i++){
+      var min_j = -BOARD_RADIUS;
+      var max_j = BOARD_RADIUS;
+      if (i < 0) {
+        min_j -= i;
+      } else if (i > 0) {
+        max_j -= i;
+      }
+      for (var j = min_j; j <= max_j ; j++){
+        Cells.insert({
+          _id: i + "," + j,
+          x: i,
+          y: j,
+          type: "empty"
+        });
+      }
+    }
+    if (Players.find().count() === 0){
+      //Player 1
+      Players.insert({
+        name: "Mike",
+        color: "green",
+        "energy":0,
+        "points":5,
+        "selectedPiece":0
+      });
+      
+      //Player 2
+      Players.insert({
+        name: "Teale",
+        color: "blue",
+        "energy":0,
+        "points":0,
+        "selectedPiece":0
+      });
+      
+      // Hands
+      Players.find().forEach(function(player) {
+        for (var i = 0; i < HAND_KEYS.length; i++) {
+          HandPieces.insert({
+            index: i,
+            key: HAND_KEYS[i],
+            type: "empty",
+            playerId: player._id,
+            dealtTime: Date.now()
+          });
+        }
+      });      
+    }
+};
+
 Games = new Mongo.Collection("games");
 Pieces = new Mongo.Collection("pieces");
 Players = new Mongo.Collection("players");
@@ -74,7 +130,7 @@ var transform = function(doc){
   model.grow = function(gameBoard){
     if (this.type == "empty"){
       return;
-    } else if (this.type == "offensive" || this.type == "energy"){
+    } else if (this.type == "offensive" || this.type == "energy" || this.type == "defense"){
       if (this.growTime){
         return;
       }
@@ -148,12 +204,14 @@ COLORS = {
   green: {
     walls: "#0f0",
     energy: "#090",
-    offensive: "#030"
+    offensive: "#030",
+    defense: "#060"
   },
   blue: {
     walls: "#00f",
     energy: "#009",
-    offensive: "#003"
+    offensive: "#003",
+    defense: "#006"
   }
 };
 
@@ -161,12 +219,14 @@ GROWING_COLORS = {
   green: {
     walls: "#1e1",
     energy: "#1a1",
-    offensive: "#141"
+    offensive: "#141",
+    defense: "#171"
   },
   blue: {
     walls: "#11e",
     energy: "#11a",
-    offensive: "#114"
+    offensive: "#114",
+    defense: "#117"
   }
 };
 
@@ -176,6 +236,9 @@ PIECES = {
   },
   "energy": {
     "growthRate": 1000,
+  },
+  "defense": {
+    "growthRate": 900,
   }
 };
 
@@ -185,58 +248,9 @@ KEY_PIECE_MAP = {
 };
 
 Meteor.startup(function(){
-
   if (Meteor.isServer && Cells.find().count() === 0){
-    console.log("No cells exist, creating cells");
-    for (var i = -BOARD_RADIUS; i <= BOARD_RADIUS; i++){
-      var min_j = -BOARD_RADIUS;
-      var max_j = BOARD_RADIUS;
-      if (i < 0) {
-        min_j -= i;
-      } else if (i > 0) {
-        max_j -= i;
-      }
-      for (var j = min_j; j <= max_j ; j++){
-        Cells.insert({
-          _id: i + "," + j,
-          x: i,
-          y: j,
-          type: "empty"
-        });
-      }
-    }
-    if (Players.find().count() === 0){
-      //Player 1
-      Players.insert({
-        name: "Mike",
-        color: "green",
-        "energy":0,
-        "points":0,
-        "selectedPiece":0
-      });
-      
-      //Player 2
-      Players.insert({
-        name: "Teale",
-        color: "blue",
-        "energy":0,
-        "points":0,
-        "selectedPiece":0
-      });
-      
-      // Hands
-      Players.find().forEach(function(player) {
-        for (var i = 0; i < HAND_KEYS.length; i++) {
-          HandPieces.insert({
-            index: i,
-            key: HAND_KEYS[i],
-            type: "empty",
-            playerId: player._id,
-            dealtTime: Date.now()
-          });
-        }
-      });      
-    }
+    resetGame();
+
     Meteor.setInterval(function(){
       Players.find().forEach(function(player) {
         var lastDealtPiece = HandPieces.findOne({playerId: player._id}, {sort: {dealtTime: -1}});
@@ -244,13 +258,16 @@ Meteor.startup(function(){
         var emptyHandPieces = HandPieces.find({playerId: player._id, type:"empty"}, {sort: {index: 1}});
         if (Date.now() - lastDealtTime > DEAL_TIME && emptyHandPieces.count()) {
           console.log(Date.now() - lastDealtTime, DEAL_TIME);
+          var piece_bucket = Math.random();
           var newType = "offensive";
-          if (Math.random() < .5) {
+          if (piece_bucket <= 0.33) {
+            newType = "defense";
+          } else if (Math.random() <= 0.66) {
             newType = "energy";
           }
           HandPieces.update(emptyHandPieces.fetch()[0]._id, {$set: {type: newType, dealtTime: Date.now()}});
         }
-      })
+      });
     }, 500);
   }
 });
@@ -262,5 +279,8 @@ var growthFunctions = {
   },
   
   "energy": function() {
-  }
+  },
+  
+  "defense": function() {
+  },
 };

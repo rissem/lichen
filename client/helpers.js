@@ -139,6 +139,17 @@ Template.body.events({
 });
 
 Template.board.events({
+  "click a.reset": function(){
+    console.log("RESET!");
+    Meteor.call("reset", function(err, result){
+      console.log("ERR", err);
+      console.log("RESULT", result);
+    });
+    Meteor.setTimeout(function(){
+      document.location.reload();
+    }, 1000);
+  },
+
   "click polygon": function(){
     var player = Players.findOne(Session.get("currentPlayer"));
     var handPiece = HandPieces.findOne({playerId: player._id, index: player.selectedPiece});

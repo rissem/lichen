@@ -16,7 +16,7 @@
   <ul>
     {{#each handPieces}}
       {{#if empty}}
-        <li>{{key}}: None {{selected}}</li>
+        <li>{{key}}: {{selected}}</li>
       {{else}}
         <li style="color:{{color}}">{{key}}: {{type}} {{selected}}</li>
       {{/if}}
@@ -25,6 +25,7 @@
 </template>
 
 <template name="board">
+  <a class="reset" href="#">Reset</a>
   <svg width="{{boardWidth}}" height="{{boardHeight}}" style="float:left" 
     viewPort="0 0 120 120" version="1.1"
     xmlns="http://www.w3.org/2000/svg">
