@@ -2,7 +2,6 @@ Meteor.startup(function(){
   $(window).keydown(function(event){
     for (var i = 0; i < HAND_KEYS.length; i++) {
       if (HAND_KEYS[i] == String.fromCharCode(event.keyCode)) {
-        console.log("DO IT");
         Players.update(Session.get("currentPlayer"), {$set: {"selectedPiece": i}});
         break;
       }
@@ -35,6 +34,10 @@ Template.hand.helpers({
     return this.type;
   },
   
+  image: function(){
+    return IMAGES[this.type];
+  },
+  
   color: function() {
     if (this.type == "empty") {
       return "aaa";
@@ -45,11 +48,7 @@ Template.hand.helpers({
   },
   
   selected: function() {
-    if (this.index == Players.findOne(Session.get("currentPlayer")).selectedPiece) {
-      return "<--";
-    } else {
-      return "";
-    }
+    return this.index == Players.findOne(Session.get("currentPlayer")).selectedPiece ? "selectedPiece" : "";
   }
 });
 
@@ -68,6 +67,10 @@ Template.board.helpers({
   
   cellPoints: function(){
     return this.cellPoints(); 
+  },
+  
+  imageCoordinates: function(){
+    return this.imageCoordinates();
   },
   /*
   x: function(){
@@ -95,28 +98,24 @@ Template.board.helpers({
 });
 
 Template.body.helpers({
+  players: function(){
+    return Players.find({}, {sort: {"points": -1}});
+  },
+
   playerColor: function() {
-    var player = Players.findOne(Session.get("currentPlayer"));
-    if (!player){
-      return;
-    }
-    return COLORS[player.color].energy;
+    return COLORS[this.color].energy;
   },
   
   playerName: function() {
-    var player = Players.findOne(Session.get("currentPlayer"));
-    if (!player){
-      return;
-    }
-    return player.name;
+    return this.name;
   },
   
   playerPoints: function(){
-    var player = Players.findOne(Session.get("currentPlayer"));
-    if (!player){
-      return;
-    }
-    return player.points;
+    return Math.floor(this.points/100);
+  },
+  
+  playerSelected: function(){
+    return this._id === Session.get("currentPlayer") ? "playerSelected" : "";
   },
   
   currentType: function() {
@@ -129,12 +128,10 @@ Template.body.helpers({
 
 Template.body.events({
   "click h1": function(){
-    var player = Players.findOne(Session.get("currentPlayer"));
-    if (player.name == "Mike") {
-      Session.set("currentPlayer", Players.findOne({name: "Teale"})._id);
-    } else {
-      Session.set("currentPlayer", Players.findOne({name: "Mike"})._id);
-    }
+    Session.set("currentPlayer", this._id);
+  },
+  "click .handIcon": function(){
+      Players.update(Session.get("currentPlayer"), {$set: {"selectedPiece": this.index}});
   }
 });
 
@@ -150,13 +147,32 @@ Template.board.events({
     }, 1000);
   },
 
-  "click polygon": function(){
+  "click image": function(){
+    if (GAME_OVER) {
+        return;
+    }
+    
     var player = Players.findOne(Session.get("currentPlayer"));
     var handPiece = HandPieces.findOne({playerId: player._id, index: player.selectedPiece});
+    
+    // Don't allow empty pieces to be placed
     if (handPiece.type == "empty")
       return;
+      
+    // Don't allow pieces to be placed on the exact same type
     if (this.playerId == player._id && this.type == handPiece.type)
       return;
+      
+    // Make sure new piece is powerful enough to take old piece
+    if (this.type != "empty" && this.playerId != player._id) {
+      var newPiece = PIECES[handPiece.type];
+      var oldPiece = PIECES[this.type];
+      if (oldPiece.defense >= newPiece.attack) {
+        return;
+      }
+    }
+    
+    // Add the piece
     Meteor.call("updateCell", [this._id, {
       playerId: player._id,
       type: handPiece.type,

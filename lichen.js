@@ -3,16 +3,16 @@ BOARD_HEIGHT = 820;
 BOARD_RADIUS = 7;
 HEX_RADIUS = 27;
 DEAL_TIME = 5000;
+TARGET_POINTS = 500000;
+GAME_OVER = false;
 
 HAND_KEYS = [
   "Q",
   "W",
   "E",
   "R",
-  "A",
-  "S",
-  "D",
-  "F"
+  "T",
+  "Y"
 ];
 
 SQRT_3_2 = Math.sqrt(3) * 0.5;
@@ -52,7 +52,7 @@ resetGame = function(){
         name: "Mike",
         color: "green",
         "energy":0,
-        "points":5,
+        "points":0,
         "selectedPiece":0
       });
       
@@ -63,6 +63,15 @@ resetGame = function(){
         "energy":0,
         "points":0,
         "selectedPiece":0
+      });
+      
+      // Player 3
+      Players.insert({
+        name: "Trevor",
+        color: "orange",
+        energy: 0,
+        points: 0,
+        selectedPiece: 0
       });
       
       // Hands
@@ -114,6 +123,17 @@ var transform = function(doc){
       String(half_left_x) + "," + String(bottom_y);
     
     return result;
+  };
+  
+  model.imageUrl = function(){
+    return IMAGES[this.type];
+  };
+  
+  model.imageCoordinates = function(){
+    return {
+      x: this.screenX() - HEX_RADIUS,
+      y: this.screenY() - HEX_RADIUS
+    };
   };
 
   model.neighbors = function(){
@@ -202,43 +222,68 @@ if (Meteor.isClient){
 
 COLORS = {
   green: {
-    walls: "#0f0",
-    energy: "#090",
-    offensive: "#030",
-    defense: "#060"
+    walls: "#84BF82",
+    energy: "#84BF82",
+    offensive: "#84BF82",
+    defense: "#84BF82"
+  },
+  orange: {
+    walls: "#7BB779",
+    energy: "#ff9142",
+    offensive: "#ff874e",
+    defense: "#ff4e1c"
   },
   blue: {
-    walls: "#00f",
-    energy: "#009",
-    offensive: "#003",
-    defense: "#006"
+    walls: "#4C85D8",
+    energy: "#4C85D8",
+    offensive: "#4C85D8",
+    defense: "#4C85D8"
   }
 };
 
 GROWING_COLORS = {
   green: {
-    walls: "#1e1",
-    energy: "#1a1",
-    offensive: "#141",
-    defense: "#171"
+    walls: "#B6E5B5",
+    energy: "#B6E5B5",
+    offensive: "#B6E5B5",
+    defense: "#B6E5B5"
+  },
+  orange: {
+    walls: "#B6E5B5",
+    energy: "#ff9142",
+    offensive: "#ff874e",
+    defense: "#ff4e1c"
   },
   blue: {
-    walls: "#11e",
-    energy: "#11a",
-    offensive: "#114",
-    defense: "#117"
+    walls: "#A3C0EF",
+    energy: "#A3C0EF",
+    offensive: "#A3C0EF",
+    defense: "#A3C0EF"
   }
+};
+
+IMAGES = {
+  walls: "crown.png",
+  energy: "farmer.png",
+  offensive: "sword.png",
+  defense: "shield.png"
 };
 
 PIECES = {
   "offensive": {
-    "growthRate": 1000,
+    "attack": 5,
+    "defense": 2,
+    "growthRate": 800,
   },
   "energy": {
-    "growthRate": 1000,
+    "attack": 3,
+    "defense": 1,
+    "growthRate": 500,
   },
   "defense": {
-    "growthRate": 900,
+    "attack": 1,
+    "defense": 3,
+    "growthRate": 1200,
   }
 };
 
@@ -252,6 +297,10 @@ Meteor.startup(function(){
     resetGame();
 
     Meteor.setInterval(function(){
+      if (GAME_OVER) {
+        return;
+      }
+      
       Players.find().forEach(function(player) {
         var lastDealtPiece = HandPieces.findOne({playerId: player._id}, {sort: {dealtTime: -1}});
         var lastDealtTime = lastDealtPiece.dealtTime;

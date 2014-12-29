@@ -1,1 +1,9 @@
 /* CSS declarations go here */
+
+.selectedPiece {
+    background-color: #ffaaaa;
+}
+
+.playerSelected {
+  border: 2px solid black;
+}

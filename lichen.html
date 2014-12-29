@@ -4,8 +4,11 @@
 
 <body>
   <div style="width:1200px">
-    <div style="width:200px; float:left">
-      <h1 style="color:{{playerColor}}">{{playerName}} {{playerPoints}}</h1>
+    <div style="width:1000px; float:left">
+      {{#each players}}
+      <h1 class="{{playerSelected}}" style="float: left; margin-right: 20px; color:{{playerColor}}">{{playerName}} {{playerPoints}}</h1>
+      {{/each}}
+      <div style="clear:both"></div>
       {{> hand }}
     </div>
     {{> board }}
@@ -13,15 +16,22 @@
 </body>
 
 <template name="hand">
-  <ul>
-    {{#each handPieces}}
-      {{#if empty}}
-        <li>{{key}}: {{selected}}</li>
-      {{else}}
-        <li style="color:{{color}}">{{key}}: {{type}} {{selected}}</li>
-      {{/if}}
-    {{/each}}
-  </ul>
+    <table>
+        <tr>
+            <td><h4>Your Hand</h4></td>
+        </tr>
+        <tr>
+            {{#each handPieces}}
+                <td class="{{selected}}">
+                    {{#if empty}}
+                        <h3 style="display:inline; float:left">{{key}}</h3>
+                    {{else}}
+                        <h3 style="padding-left: 20px; display:inline; float:left">{{key}}</h3><img class="handIcon" style="float:left" src="{{image}}" />
+                    {{/if}}
+                </td>
+            {{/each}}
+        </tr>
+    </table>
 </template>
 
 <template name="board">
@@ -31,6 +41,7 @@
     xmlns="http://www.w3.org/2000/svg">
     {{#each cells}}
       <polygon points="{{cellPoints}}" fill="{{color}}" stroke="black" stroke-width="4" />
+      <image xlink:href="{{imageUrl}}" x="{{imageCoordinates.x}}" y="{{imageCoordinates.y}}" height=54px width=54px />
     {{/each}}
   </svg>
 </template>
