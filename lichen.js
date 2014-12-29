@@ -3,7 +3,7 @@ BOARD_HEIGHT = 820;
 BOARD_RADIUS = 7;
 HEX_RADIUS = 27;
 DEAL_TIME = 5000;
-TARGET_POINTS = 500000;
+TARGET_POINTS = 250000;
 GAME_OVER = false;
 
 HAND_KEYS = [
@@ -15,8 +15,10 @@ HAND_KEYS = [
   "Y"
 ];
 
+//square root of 3 divided by two
 SQRT_3_2 = Math.sqrt(3) * 0.5;
 
+//TODO should this really be a function?
 var origin = function(){
   return {
     x: BOARD_WIDTH / 2,
@@ -24,6 +26,7 @@ var origin = function(){
   };
 };
 
+//TODO eliminate this once multiple games are supported
 //GLOBAL
 resetGame = function(){
     Cells.remove({});
@@ -55,7 +58,7 @@ resetGame = function(){
         "points":0,
         "selectedPiece":0
       });
-      
+
       //Player 2
       Players.insert({
         name: "Teale",
@@ -64,7 +67,7 @@ resetGame = function(){
         "points":0,
         "selectedPiece":0
       });
-      
+
       // Player 3
       Players.insert({
         name: "Trevor",
@@ -73,7 +76,7 @@ resetGame = function(){
         points: 0,
         selectedPiece: 0
       });
-      
+
       // Hands
       Players.find().forEach(function(player) {
         for (var i = 0; i < HAND_KEYS.length; i++) {
@@ -85,7 +88,7 @@ resetGame = function(){
             dealtTime: Date.now()
           });
         }
-      });      
+      });
     }
 };
 
@@ -104,7 +107,8 @@ var transform = function(doc){
   model.screenY = function(){
     return origin().y - (this.y * HEX_RADIUS * 2 + this.x * HEX_RADIUS);
   };
-  
+
+  //returns a string of coordinates that can be used by the polygon tag
   model.cellPoints = function() {
     var x = this.screenX();
     var y = this.screenY();
@@ -114,21 +118,21 @@ var transform = function(doc){
     var half_right_x = x + HEX_RADIUS / 2;
     var top_y = Math.ceil( y - HEX_RADIUS * SQRT_3_2 - 2);
     var bottom_y = Math.ceil(y + HEX_RADIUS * SQRT_3_2 + 2);
-    
+
     var result = String(left_x) + "," + String(y) + " " +
       String(half_left_x) + "," + String(top_y) + " " +
       String(half_right_x) + "," + String(top_y) + " " +
       String(right_x) + "," + String(y) + " " +
       String(half_right_x) + "," + String(bottom_y) + " " +
       String(half_left_x) + "," + String(bottom_y);
-    
+
     return result;
   };
-  
+
   model.imageUrl = function(){
     return IMAGES[this.type];
   };
-  
+
   model.imageCoordinates = function(){
     return {
       x: this.screenX() - HEX_RADIUS,
@@ -147,6 +151,7 @@ var transform = function(doc){
   };
 
   //should we be passing a timestamp here so all birth calculations use the same timestamp?
+  //yes, but what's to stop a client from cheating then?
   model.grow = function(gameBoard){
     if (this.type == "empty"){
       return;
@@ -197,18 +202,18 @@ if (Meteor.isServer){
   Meteor.publish('moves', function(){
     return Moves.find({});
   });
-  
+
   Meteor.publish("handPieces", function(playerId){
-    console.log("PLAYER ID", playerId);
-    console.log("COUNT", HandPieces.find({playerId: playerId}).count());
+    // console.log("PLAYER ID", playerId);
+    // console.log("COUNT", HandPieces.find({playerId: playerId}).count());
     return HandPieces.find({playerId: playerId});
   });
 
   Meteor.publish("cells", function(){
-    console.log("PUBLISH THE CELLS", Cells.find().count());
+    // console.log("PUBLISH THE CELLS", Cells.find().count());
     return Cells.find({});
   });
-} 
+}
 
 if (Meteor.isClient){
   Meteor.subscribe("games");
@@ -220,6 +225,7 @@ if (Meteor.isClient){
   });
 }
 
+//this seems like it should be stored in the model for each of the cell types
 COLORS = {
   green: {
     walls: "#84BF82",
@@ -292,6 +298,7 @@ KEY_PIECE_MAP = {
   "W": "energy"
 };
 
+//this should be refactored into a start game function
 Meteor.startup(function(){
   if (Meteor.isServer && Cells.find().count() === 0){
     resetGame();
@@ -300,7 +307,7 @@ Meteor.startup(function(){
       if (GAME_OVER) {
         return;
       }
-      
+
       Players.find().forEach(function(player) {
         var lastDealtPiece = HandPieces.findOne({playerId: player._id}, {sort: {dealtTime: -1}});
         var lastDealtTime = lastDealtPiece.dealtTime;
@@ -323,13 +330,13 @@ Meteor.startup(function(){
 
 var growthFunctions = {
   "empty": function() {},
-  
+
   "offensive": function() {
   },
-  
+
   "energy": function() {
   },
-  
+
   "defense": function() {
   },
 };
