@@ -1,0 +1,9 @@
+FROM ubuntu
+MAINTAINER Mike Risse
+
+RUN apt-get update
+RUN apt-get install -y curl git python build-essential zip
+
+RUN curl https://install.meteor.com | /bin/sh
+
+WORKDIR /app
